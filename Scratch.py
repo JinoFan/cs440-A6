@@ -1,15 +1,15 @@
 import numpy as np
 import matplotlib
 import neuralnetworks as nn
-import mlutils as ml
 
 
 
 def trainNNs(X, T, trainFraction, hiddenLayerStructures, numberRepetitions, numberIterations, classify):
 
     import numpy as np
-    import matplotlib
     import neuralnetworks as nn
+    import time
+    import mlutils as ml
 
     results = []
 
@@ -17,6 +17,9 @@ def trainNNs(X, T, trainFraction, hiddenLayerStructures, numberRepetitions, numb
     verbose = False
 
     for structure in hiddenLayerStructures:
+        trainList = []
+        testList = []
+        t0 = time.time()
         for i in range(numberRepetitions):
             Xtrain, Ttrain, Xtest, Ttest = ml.partition(X, T, (trainFraction, 1 - trainFraction),
                                                         classification=classify)
@@ -25,13 +28,16 @@ def trainNNs(X, T, trainFraction, hiddenLayerStructures, numberRepetitions, numb
             else:
                 nnet = nn.NeuralNetwork(1,structure,1)
 
-            nnet.train(Xtrain, Ttrain, numberIterations, verbose)
+            nnet.train(Xtrain, Ttrain, numberIterations)
 
-            Y = nnet.use(X)
-            Ytest,Ztest = nnet.use(Xtest,allOutputs=True)
+            Ytrain = nnet.use(Xtrain)
+            Ytest,Ztest = nnet.use(Xtest, allOutputs=True)
 
-            results.append([structure, Xtest, Ztest])
+            trainList.append(np.sqrt(np.mean((Ytrain - Ttrain ) ** 2)))
+            testList.append(np.sqrt(np.mean((Ytest - Ttest) ** 2)))
 
+        timeTaken = time.time() - t0
+        results.append([structure, trainList, testList, timeTaken])
     return results
 
 X = np.arange(10).reshape((-1,1))
