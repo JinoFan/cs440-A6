@@ -4,7 +4,7 @@ import neuralnetworks as nn
 
 
 
-def trainNNs(X, T, trainFraction, hiddenLayerStructures, numberRepetitions, numberIterations, classify):
+def trainNNs(X, T, trainFraction, hiddenLayerStructures, numberRepetitions, numberIterations, classify=False):
 
     import numpy as np
     import neuralnetworks as nn
@@ -24,9 +24,9 @@ def trainNNs(X, T, trainFraction, hiddenLayerStructures, numberRepetitions, numb
             Xtrain, Ttrain, Xtest, Ttest = ml.partition(X, T, (trainFraction, 1 - trainFraction),
                                                         classification=classify)
             if classify:
-                nnet = nn.NeuralNetworkClassifier(1,structure,1)
+                nnet = nn.NeuralNetworkClassifier(X.shape[1],structure,T.shape[1])
             else:
-                nnet = nn.NeuralNetwork(1,structure,1)
+                nnet = nn.NeuralNetwork(X.shape[1],structure,T.shape[1])
 
             nnet.train(Xtrain, Ttrain, numberIterations)
 
@@ -46,9 +46,34 @@ def summarize(results):
     for item in results:
         summary.append([item[0], np.mean(item[1]), np.mean(item[2]), item[3]])
 
-    print(summary)
+    return summary
 
-X = np.arange(10).reshape((-1,1))
-T = X + 1 + np.random.uniform(-1, 1, ((10,1)))
-results = trainNNs(X, T, 0.8, [0, 1, 2], 50, 400, classify=False)
-summarize(results)
+def bestNetwork(summary):
+    return min(summary, key = lambda x: x[2])
+
+
+import pandas as pd
+
+energydata = pd.read_csv("energydata_complete.csv")
+energydata = energydata.drop(["date","rv1","rv2"], axis=1)
+
+print(energydata.columns.values)
+
+# print(energydata.as_matrix().shape)
+# print(energydata.as_matrix()[:2,:])
+
+Tenergy = energydata[["Appliances","lights"]].as_matrix()
+#print(Tenergy)
+
+Xenergy = energydata.drop(["Appliances", "lights"], axis=1).as_matrix()
+
+print(Tenergy.shape)
+print(Xenergy.shape)
+results = trainNNs(Xenergy, Tenergy, 0.8, [0, 5, [5, 5], [10, 10]], 10, 100)
+print(bestNetwork(summarize(results)))
+
+#print(energydata)
+# X = np.arange(10).reshape((-1,1))
+# T = X + 1 + np.random.uniform(-1, 1, ((10,1)))
+# results = trainNNs(X, T, 0.8, [0, 1, 2], 50, 400, classify=False)
+# bestNetwork(summarize(results))
