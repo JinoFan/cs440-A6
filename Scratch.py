@@ -14,7 +14,7 @@ def trainNNs(X, T, trainFraction, hiddenLayerStructures, numberRepetitions, numb
     results = []
 
     # debugging
-    verbose = False
+    verbose = True
 
     for structure in hiddenLayerStructures:
         trainList = []
@@ -24,14 +24,15 @@ def trainNNs(X, T, trainFraction, hiddenLayerStructures, numberRepetitions, numb
             Xtrain, Ttrain, Xtest, Ttest = ml.partition(X, T, (trainFraction, 1 - trainFraction),
                                                         classification=classify)
             if classify:
-                nnet = nn.NeuralNetworkClassifier(X.shape[1],structure,T.shape[1])
+                nnet = nn.NeuralNetworkClassifier(X.shape[1],structure,len(np.unique(T)))
             else:
                 nnet = nn.NeuralNetwork(X.shape[1],structure,T.shape[1])
 
             nnet.train(Xtrain, Ttrain, numberIterations)
 
             Ytrain = nnet.use(Xtrain)
-            Ytest,Ztest = nnet.use(Xtest, allOutputs=True)
+
+            Ytest = nnet.use(Xtest)
 
             trainList.append(np.sqrt(np.mean((Ytrain - Ttrain ) ** 2)))
             testList.append(np.sqrt(np.mean((Ytest - Ttest) ** 2)))
@@ -54,23 +55,49 @@ def bestNetwork(summary):
 
 import pandas as pd
 
-energydata = pd.read_csv("energydata_complete.csv")
-energydata = energydata.drop(["date","rv1","rv2"], axis=1)
+frogdata = pd.read_csv("Frogs_MFCCs.csv")
+print(frogdata.columns.values)
 
-print(energydata.columns.values)
+speciesList = frogdata["Species"]
 
-# print(energydata.as_matrix().shape)
-# print(energydata.as_matrix()[:2,:])
+uniqueSpecies = np.unique(speciesList)
 
-Tenergy = energydata[["Appliances","lights"]].as_matrix()
-#print(Tenergy)
+speciesDict = dict(enumerate(uniqueSpecies))
 
-Xenergy = energydata.drop(["Appliances", "lights"], axis=1).as_matrix()
+Tanuran = speciesList.replace(speciesDict.values(), speciesDict.keys()).as_matrix().reshape(-1,1)
+Xanuran = frogdata.drop(["MFCCs_ 1","Family", "Genus", "Species", "RecordID"], axis=1).as_matrix()
 
-print(Tenergy.shape)
-print(Xenergy.shape)
-results = trainNNs(Xenergy, Tenergy, 0.8, [0, 5, [5, 5], [10, 10]], 10, 100)
+print(Xanuran.shape)
+print(Tanuran.shape)
+print(Xanuran[:2,:])
+print(Tanuran[:2])
+
+for i in range(10):
+    print('{} samples in class {}'.format(np.sum(Tanuran==i), i))
+
+results = trainNNs(Xanuran, Tanuran, 0.8, [0, 3,  5, [5, 5], [10,10,10]], 5, 100, classify=True)
+
+print(summarize(results))
+
 print(bestNetwork(summarize(results)))
+# energydata = pd.read_csv("energydata_complete.csv")
+# energydata = energydata.drop(["date","rv1","rv2"], axis=1)
+#
+# print(energydata.columns.values)
+#
+# # print(energydata.as_matrix().shape)
+# # print(energydata.as_matrix()[:2,:])
+#
+# Tenergy = energydata[["Appliances","lights"]].as_matrix()
+# #print(Tenergy)
+#
+# Xenergy = energydata.drop(["Appliances", "lights"], axis=1).as_matrix()
+#
+# print(Tenergy.shape)
+# print(Xenergy.shape)
+# results = trainNNs(Xenergy, Tenergy, 0.8, [0, 1, 2, 3, 4, 5, [5, 5], [10, 10], [5,5,5]], 10, 100)
+# print(summarize(results))
+# print(bestNetwork(summarize(results)))
 
 #print(energydata)
 # X = np.arange(10).reshape((-1,1))
