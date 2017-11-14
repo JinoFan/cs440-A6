@@ -40,7 +40,15 @@ def trainNNs(X, T, trainFraction, hiddenLayerStructures, numberRepetitions, numb
         results.append([structure, trainList, testList, timeTaken])
     return results
 
+def summarize(results):
+    import numpy as np
+    summary = []
+    for item in results:
+        summary.append([item[0], np.mean(item[1]), np.mean(item[2]), item[3]])
+
+    print(summary)
+
 X = np.arange(10).reshape((-1,1))
 T = X + 1 + np.random.uniform(-1, 1, ((10,1)))
-results = trainNNs(X, T, 0.8, [2, 10, [10, 10]], 5, 100, classify=False)
-print(results)
+results = trainNNs(X, T, 0.8, [0, 1, 2], 50, 400, classify=False)
+summarize(results)
