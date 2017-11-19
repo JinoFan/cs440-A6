@@ -38,7 +38,7 @@ def trainNNs(X, T, trainFraction, hiddenLayerStructures, numberRepetitions, numb
                 nnet = nn.NeuralNetworkClassifier(X.shape[1],structure,len(np.unique(T)))
             else:
                 nnet = nn.NeuralNetwork(X.shape[1],structure,T.shape[1])
-
+sa
             nnet.train(Xtrain, Ttrain, numberIterations)
 
             Ytrain = nnet.use(Xtrain)
